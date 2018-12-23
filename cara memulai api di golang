@@ -1,0 +1,205 @@
+install :
+using go get
+- cd <PROJECT IN $GOPATH>
+- go get -v github.com/labstack/echo/
+
+
+1. membuat dan menjalankan go (basic)- program
+
+package main
+
+import "github.com/labstack/echo"
+
+func main() {
+
+	e := echo.New()
+
+	e.GET("/foo", func(c echo.Context)error{
+
+		return c.JSON(200, "BELAJAR GOLANG")
+	})
+
+	// Start echo on desired port
+	e.Logger.Fatal(e.Start(":5050"))
+
+}
+
+2. go get -v github.com/joho/godotenv
+
+
+
+
+cara membuat tabel in db via golang
+ 
+package main
+
+import (
+    "github.com/jinzhu/gorm"
+    _ "github.com/jinzhu/gorm/dialects/postgres"
+    "github.com/labstack/echo"
+)
+
+func main() {
+    db, err := gorm.Open("postgres", "host=localhost port=5432 user=postgres dbname=absensi sslmode=disable password=password")
+    if err != nil {
+        panic(err)
+    }
+    defer db.Close()
+
+    e := echo.New()
+
+    e.GET("/data-siswa", func(c echo.Context) error {
+        var data Siswa
+
+        res, err := data.GetAllData(db)
+        if err != nil {
+            return echo.NewHTTPError(500, err.Error())
+        }
+
+        return c.JSON(200, res)
+    })
+
+    e.GET("/buat", func(c echo.Context) error {
+        db.CreateTable(&Siswa{})
+
+        return echo.NewHTTPError(200, "OKE")
+    })
+
+    e.Logger.Fatal(e.Start(":4500"))
+
+}
+
+// Tabel Siswa
+type Siswa struct {
+    gorm.Model
+    Nama   string gorm:varchar(60)
+    Kelas  int
+    Alamat string
+}
+
+// Buat Tabel Siswa
+func (tsiswa Siswa) CreateTable(db *gorm.DB) (err error) {
+    err = db.AutoMigrate(&Siswa{}).Error
+
+    return
+}
+
+// Tambah Data ke Siswa
+func (tsiswa Siswa) InsertData(db *gorm.DB) (err error) {
+    err = db.Create(&tsiswa).Error
+
+    return
+}
+
+// Tampilkan data siswa
+func (tsiswa Siswa) GetAllData(db *gorm.DB) (res []Siswa, err error) {
+    err = db.Find(&res).Error
+
+    return
+
+
+/* 
+
+package main
+
+import (
+ "github.com/jinzhu/gorm"
+ _ "github.com/jinzhu/gorm/dialects/postgres"
+ "github.com/labstack/echo"
+)
+
+func main() {
+ db, err := gorm.Open("postgres", "host=localhost port=5432 user=postgres dbname=latihan1 sslmode=disable password=bismillah")
+ if err != nil {
+  panic(err)
+ }
+ defer db.Close()
+
+ e := echo.New()
+
+ e.GET("/getdata", func(c echo.Context) error {
+  var data Siswa
+
+  res, err := data.GetAllData(db)
+  if err != nil {
+   return echo.NewHTTPError(500, err.Error())
+  }
+  return c.JSON(200, res)
+ })
+
+ e.GET("/getdata/:id", func(c echo.Context) error {
+  var id = c.Param("id")
+
+  res := db.Where(id).First(&Siswa{})
+  if err != nil {
+   return echo.NewHTTPError(500, err.Error())
+  }
+  return c.JSON(200, res)
+ })
+
+ e.POST("/addsiswa", func(c echo.Context) error {
+  s := new(Siswa)
+
+  if err := c.Bind(s); err != nil {
+   return echo.NewHTTPError(500, err.Error())
+  }
+
+  db.NewRecord(s)
+  db.Save(&s)
+
+  return c.JSON(200, s)
+ })
+
+ e.PUT("/updatedata", func(c echo.Context) error {
+  s := new(Siswa)
+
+  if err := c.Bind(s); err != nil {
+   return echo.NewHTTPError(500, "Error")
+  }
+
+  db.Where("id = ?", s.ID).First(&Siswa{})
+  db.Save(&s)
+
+  return c.JSON(200, s)
+ })
+
+ e.GET("/deletedata/:id", func(c echo.Context) error {
+  var id = c.Param("id")
+
+  db.Where(id).Delete(&Siswa{})
+  if err != nil {
+   return echo.NewHTTPError(500, err.Error())
+  }
+  return c.JSON(200, "delete success")
+ })
+
+ e.GET("/createtablesiswa", func(c echo.Context) error {
+  db.CreateTable(&Siswa{})
+
+  return echo.NewHTTPError(200, "Create Success")
+ })
+
+ e.Logger.Fatal(e.Start(":4500"))
+}
+
+type Siswa struct {
+ gorm.Model
+ Nama  string `gorm:varchar(60)`
+ NIS   int
+ Kelas string
+}
+
+func (tsiswa Siswa) CreateTable(db *gorm.DB) (err error) {
+ err = db.AutoMigrate(&Siswa{}).Error
+
+ return
+}
+
+func (tsiswa Siswa) GetAllData(db *gorm.DB) (res []Siswa, err error) {
+ err = db.Find(&res).Error
+
+ return
+}
+
+
+*/
